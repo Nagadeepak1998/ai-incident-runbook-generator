@@ -1,0 +1,16 @@
+services:
+  runbook-generator:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile
+    image: ai-incident-runbook-generator:local
+    ports:
+      - "8080:8080"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    read_only: true
+    tmpfs:
+      - /tmp
+

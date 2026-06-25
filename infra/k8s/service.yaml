@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-incident-runbook-generator
+  labels:
+    app: ai-incident-runbook-generator
+spec:
+  selector:
+    app: ai-incident-runbook-generator
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+

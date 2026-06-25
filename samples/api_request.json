@@ -1,0 +1,26 @@
+{
+  "incident": {
+    "service": "payments-api",
+    "title": "Checkout payment authorization latency is above SLO",
+    "severity": "sev2",
+    "alerts": ["p95 latency for payments-api is 1850ms"],
+    "logs": ["gateway timeout while calling payment processor"],
+    "metrics": {"p95_latency_ms": 1850, "error_rate_percent": 7.2},
+    "recent_changes": ["deployed pay-2026.06.25 with new processor timeout"]
+  },
+  "sections": [
+    {
+      "id": "payments-latency-sev2",
+      "service": "payments-api",
+      "title": "Payment authorization latency or timeout spike",
+      "severity": "sev2",
+      "keywords": ["payment", "payments", "authorization", "latency", "timeout", "retry", "processor"],
+      "symptoms": ["p95 latency above SLO", "gateway timeout while calling processor"],
+      "checks": ["Confirm p95 latency and error rate.", "Review recent timeout changes."],
+      "actions": ["Page payments on-call.", "Prepare rollback for human approval."],
+      "escalation": "Escalate to payments platform owner."
+    }
+  ],
+  "min_confidence": 0.2
+}
+

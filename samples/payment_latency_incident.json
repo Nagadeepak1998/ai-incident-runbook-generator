@@ -1,0 +1,25 @@
+{
+  "service": "payments-api",
+  "title": "Checkout payment authorization latency is above SLO",
+  "severity": "sev2",
+  "alerts": [
+    "p95 latency for payments-api is 1850ms for 12 minutes",
+    "checkout authorization errors increased to 7.2 percent",
+    "Bearer abcdefghijklmnopqrstuvwxyz1234567890 was seen in one debug line"
+  ],
+  "logs": [
+    "gateway timeout while calling payment processor from payments-api",
+    "retry budget exhausted for processor-authorize after deploy pay-2026.06.25",
+    "api_key=prod_live_this_should_not_be_returned"
+  ],
+  "metrics": {
+    "p95_latency_ms": 1850,
+    "error_rate_percent": 7.2,
+    "retry_budget_remaining": 0
+  },
+  "recent_changes": [
+    "deployed pay-2026.06.25 with new processor timeout",
+    "rollback not yet attempted"
+  ]
+}
+

@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+      - name: Lint
+        run: ruff check app src tests
+      - name: Test
+        run: pytest
+      - name: Sample runbook
+        run: |
+          runbook-generator generate \
+            --incident samples/payment_latency_incident.json \
+            --runbooks samples/runbook_corpus.json \
+            --output reports/payment_latency_runbook.json
+      - name: Docker build
+        run: docker build -f infra/docker/Dockerfile -t ai-incident-runbook-generator:ci .
+

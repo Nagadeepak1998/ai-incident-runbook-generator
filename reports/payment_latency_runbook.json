@@ -1,0 +1,84 @@
+{
+  "confidence": 0.98,
+  "escalation": "Escalate to payments platform owner and vendor integration contact if error rate stays above 5 percent for 15 minutes.",
+  "evidence": [
+    "p95 latency for payments-api is 1850ms for 12 minutes",
+    "checkout authorization errors increased to 7.2 percent",
+    "Bearer [REDACTED] was seen in one debug line",
+    "gateway timeout while calling payment processor from payments-api",
+    "retry budget exhausted for processor-authorize after deploy pay-2026.06.25",
+    "api_key=[REDACTED]",
+    "deployed pay-2026.06.25 with new processor timeout",
+    "rollback not yet attempted"
+  ],
+  "immediate_checks": [
+    "Confirm p95 latency, error rate, and retry budget from the last 15 minutes.",
+    "Compare processor timeout and retry settings against the previous release.",
+    "Check downstream processor status page and integration error codes.",
+    "Verify whether checkout traffic shifted by region or payment method.",
+    "Review recent deploy notes for payment gateway or timeout changes."
+  ],
+  "likely_cause": "Likely aligned with runbook 'Payment authorization latency or timeout spike'.",
+  "matched_sections": [
+    {
+      "id": "payments-latency-sev2",
+      "matched_terms": [
+        "above",
+        "api",
+        "authorization",
+        "budget",
+        "calling",
+        "checkout",
+        "deploy",
+        "errors",
+        "for",
+        "from",
+        "gateway",
+        "in"
+      ],
+      "score": 52.5,
+      "title": "Payment authorization latency or timeout spike"
+    },
+    {
+      "id": "search-error-sev3",
+      "matched_terms": [
+        "above",
+        "after",
+        "api",
+        "deploy",
+        "errors",
+        "latency"
+      ],
+      "score": 10.5,
+      "title": "Search API elevated 5xx errors"
+    },
+    {
+      "id": "auth-login-sev2",
+      "matched_terms": [
+        "after",
+        "api",
+        "errors",
+        "sev2"
+      ],
+      "score": 6.0,
+      "title": "Authentication login failures"
+    }
+  ],
+  "recommended_actions": [
+    "Page payments on-call and assign one incident commander.",
+    "Freeze additional payments-api deploys until the incident is stable.",
+    "If processor timeout changed in the latest release, prepare rollback for human approval.",
+    "Route customer support updates through the incident commander.",
+    "Capture sanitized evidence and timeline before closing the incident."
+  ],
+  "redaction_count": 2,
+  "risk_flags": [
+    "high_severity_requires_human_approval",
+    "rollback_already_attempted"
+  ],
+  "service": "payments-api",
+  "severity": "sev2",
+  "status": "ready",
+  "summary": "SEV2 incident for payments-api: Checkout payment authorization latency is above SLO. Runbook status is ready based on sanitized alerts and matched procedures.",
+  "title": "Checkout payment authorization latency is above SLO"
+}
