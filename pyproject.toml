@@ -29,12 +29,8 @@ runbook-generator = "runbook_generator.cli:main"
 testpaths = ["tests"]
 pythonpath = ["src", "."]
 
-[tool.setuptools]
-packages = ["runbook_generator", "app"]
-
-[tool.setuptools.package-dir]
-runbook_generator = "src/runbook_generator"
-app = "app"
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [tool.ruff]
 line-length = 100

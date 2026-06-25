@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import os
 from pathlib import Path
 
 
@@ -22,6 +23,7 @@ def test_cli_writes_report(tmp_path: Path) -> None:
         check=False,
         text=True,
         capture_output=True,
+        env={**os.environ, "PYTHONPATH": "src:."},
     )
 
     assert result.returncode == 0

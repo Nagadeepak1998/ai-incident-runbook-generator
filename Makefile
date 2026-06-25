@@ -1,4 +1,4 @@
-.PHONY: setup test lint sample run smoke docker-build docker-run clean
+.PHONY: setup test lint sample sample-markdown run smoke docker-build docker-run clean
 
 setup:
 	python3 -m venv .venv
@@ -9,13 +9,20 @@ test:
 	.venv/bin/pytest
 
 lint:
-	.venv/bin/ruff check app src tests
+	.venv/bin/ruff check src tests
 
 sample:
 	.venv/bin/runbook-generator generate \
 		--incident samples/payment_latency_incident.json \
 		--runbooks samples/runbook_corpus.json \
 		--output reports/payment_latency_runbook.json
+
+sample-markdown:
+	.venv/bin/runbook-generator generate \
+		--incident samples/payment_latency_incident.json \
+		--runbooks samples/runbook_corpus.json \
+		--format markdown \
+		--output reports/payment_latency_runbook.md
 
 run:
 	.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080

@@ -45,10 +45,10 @@ flowchart LR
 
 ```text
 .
-├── app                   # FastAPI service and Prometheus metrics
 ├── docs                  # Case study and CI workflow template
 ├── infra                 # Docker, Kubernetes, and Terraform assets
 ├── samples               # Incident and runbook corpus fixtures
+├── src/app               # FastAPI service and Prometheus metrics
 ├── src/runbook_generator # Redaction, retrieval, generation, CLI
 └── tests                 # Engine, CLI, and API tests
 ```
@@ -70,9 +70,11 @@ make lint
 
 ```bash
 make sample
+make sample-markdown
 ```
 
 Output is written to `reports/payment_latency_runbook.json`.
+The Markdown version is written to `reports/payment_latency_runbook.md`.
 
 Direct CLI:
 
@@ -82,6 +84,16 @@ Direct CLI:
   --runbooks samples/runbook_corpus.json \
   --output reports/payment_latency_runbook.json \
   --min-confidence 0.25
+```
+
+Markdown output for an incident ticket:
+
+```bash
+.venv/bin/runbook-generator generate \
+  --incident samples/payment_latency_incident.json \
+  --runbooks samples/runbook_corpus.json \
+  --format markdown \
+  --output reports/payment_latency_runbook.md
 ```
 
 ## Run the API
@@ -187,4 +199,3 @@ git push
 - The sample incident and runbook corpus are synthetic.
 - A production deployment should add authn/authz, audit retention, runbook ownership,
   approval workflow, and optional human-reviewed LLM summarization.
-

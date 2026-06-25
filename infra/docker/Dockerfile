@@ -8,7 +8,6 @@ WORKDIR /app
 RUN useradd --create-home --uid 10001 appuser
 
 COPY pyproject.toml README.md ./
-COPY app ./app
 COPY src ./src
 
 RUN python -m pip install --no-cache-dir --upgrade pip \
@@ -19,4 +18,3 @@ USER appuser
 EXPOSE 8080
 
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
-

@@ -4,7 +4,7 @@ import argparse
 from pathlib import Path
 
 from runbook_generator.generator import generate_runbook
-from runbook_generator.io import load_incident, load_runbooks, write_json
+from runbook_generator.io import load_incident, load_runbooks, render_markdown, write_json, write_text
 
 
 def main() -> int:
@@ -15,6 +15,7 @@ def main() -> int:
     generate.add_argument("--incident", required=True, type=Path)
     generate.add_argument("--runbooks", required=True, type=Path)
     generate.add_argument("--output", required=True, type=Path)
+    generate.add_argument("--format", choices=["json", "markdown"], default="json")
     generate.add_argument("--min-confidence", type=float, default=0.2)
 
     args = parser.parse_args()
@@ -22,7 +23,10 @@ def main() -> int:
         incident = load_incident(args.incident)
         runbooks = load_runbooks(args.runbooks)
         draft = generate_runbook(incident, runbooks, min_confidence=args.min_confidence)
-        write_json(args.output, draft.model_dump())
+        if args.format == "markdown":
+            write_text(args.output, render_markdown(draft))
+        else:
+            write_json(args.output, draft.model_dump())
         print(
             f"{draft.status}: {draft.service} {draft.severity} "
             f"confidence={draft.confidence:.3f} redactions={draft.redaction_count}"
@@ -33,4 +37,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

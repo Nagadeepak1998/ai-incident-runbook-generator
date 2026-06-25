@@ -3,7 +3,6 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
-reports/latest/*.json
-reports/latest/*.md
-!reports/latest/.gitkeep
-
+reports/*.json
+reports/*.md
+!reports/.gitkeep
