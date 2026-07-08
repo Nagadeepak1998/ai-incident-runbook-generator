@@ -6,3 +6,6 @@ __pycache__/
 reports/*.json
 reports/*.md
 !reports/.gitkeep
+!reports/payment_latency_runbook.json
+!reports/payment_latency_runbook.md
+!reports/payment_latency_readiness_review.md

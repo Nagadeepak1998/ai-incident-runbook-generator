@@ -13,15 +13,24 @@ def main() -> int:
     payload = json.loads(Path("samples/api_request.json").read_text())
     health = client.get("/health")
     response = client.post("/generate", json=payload)
+    review = client.post("/review", json={"runbook": response.json()})
     metrics = client.get("/metrics")
-    if health.status_code != 200 or response.status_code != 200 or metrics.status_code != 200:
+    if (
+        health.status_code != 200
+        or response.status_code != 200
+        or review.status_code != 200
+        or metrics.status_code != 200
+    ):
         print("API smoke failed")
         return 1
     body = response.json()
-    print(f"{body['status']}: confidence={body['confidence']} matches={len(body['matched_sections'])}")
+    review_body = review.json()
+    print(
+        f"{body['status']}: confidence={body['confidence']} "
+        f"matches={len(body['matched_sections'])} review={review_body['decision']}"
+    )
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

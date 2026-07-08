@@ -16,6 +16,10 @@ This service creates a concise first-draft runbook from alerts, logs, service na
 existing runbook snippets so engineers can move faster without inventing actions under
 pressure.
 
+This upgrade also adds a runbook readiness review gate. The gate checks whether a
+generated draft has enough confidence, evidence, checks, actions, escalation guidance, and
+human approval coverage before it is handed to an on-call engineer.
+
 ## Architecture
 
 ```mermaid
@@ -25,12 +29,14 @@ flowchart LR
     B --> D
     D --> E[Evidence scoring]
     E --> F[Runbook draft]
-    F --> G[CLI report artifact]
-    F --> H[FastAPI /generate]
-    H --> I[Prometheus /metrics]
-    H --> J[Docker image]
-    J --> K[Kubernetes manifests]
-    J --> L[Terraform ECR/logging skeleton]
+    F --> G[Readiness review]
+    G --> H[CLI report artifact]
+    G --> I[FastAPI /review]
+    F --> J[FastAPI /generate]
+    J --> K[Prometheus /metrics]
+    J --> L[Docker image]
+    L --> M[Kubernetes manifests]
+    L --> N[Terraform ECR/logging skeleton]
 ```
 
 ## What It Demonstrates
@@ -38,7 +44,8 @@ flowchart LR
 - AI platform support workflow without hardcoded secrets or external model calls
 - Retrieval-style ranking, evidence scoring, redaction, and deterministic output
 - Shared business logic across CLI and FastAPI
-- Prometheus metrics for generated drafts, confidence, and latency
+- Runbook readiness review with approve, review, and block decisions
+- Prometheus metrics for generated drafts, review decisions, confidence, readiness, and latency
 - Tests, linting, Docker, Kubernetes, Terraform skeleton, and CI-ready automation
 
 ## Repository Layout
@@ -71,15 +78,17 @@ make lint
 ```bash
 make sample
 make sample-markdown
+make sample-review
 ```
 
 Output is written to `reports/payment_latency_runbook.json`.
 The Markdown version is written to `reports/payment_latency_runbook.md`.
+The readiness review is written to `reports/payment_latency_readiness_review.md`.
 
 Direct CLI:
 
 ```bash
-.venv/bin/runbook-generator generate \
+PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli generate \
   --incident samples/payment_latency_incident.json \
   --runbooks samples/runbook_corpus.json \
   --output reports/payment_latency_runbook.json \
@@ -89,12 +98,24 @@ Direct CLI:
 Markdown output for an incident ticket:
 
 ```bash
-.venv/bin/runbook-generator generate \
+PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli generate \
   --incident samples/payment_latency_incident.json \
   --runbooks samples/runbook_corpus.json \
   --format markdown \
   --output reports/payment_latency_runbook.md
 ```
+
+Review an existing generated runbook before handoff:
+
+```bash
+PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli review \
+  --runbook reports/payment_latency_runbook.json \
+  --format markdown \
+  --output reports/payment_latency_readiness_review.md
+```
+
+Use `--fail-on-review` when this command should fail the pipeline for drafts that need
+manual review, not only drafts that are fully blocked.
 
 ## Run the API
 
@@ -114,6 +135,17 @@ Generate:
 curl -X POST http://localhost:8080/generate \
   -H "Content-Type: application/json" \
   --data-binary @samples/api_request.json
+```
+
+Review:
+
+```bash
+RUNBOOK_JSON="$(curl -s -X POST http://localhost:8080/generate \
+  -H "Content-Type: application/json" \
+  --data-binary @samples/api_request.json)"
+curl -X POST http://localhost:8080/review \
+  -H "Content-Type: application/json" \
+  -d "{\"runbook\":$RUNBOOK_JSON}"
 ```
 
 Metrics:
@@ -168,8 +200,12 @@ Prometheus-compatible metrics exposed at `/metrics`:
 - `runbook_generations_total{status=...}`
 - `runbook_generation_confidence`
 - `runbook_generation_seconds`
+- `runbook_reviews_total{decision=...}`
+- `runbook_readiness_score`
 
 The generated draft also includes `redaction_count`, `matched_sections`, and `risk_flags`.
+The readiness review includes `decision`, `readiness_score`, `required_human_approval`, and
+finding-level recommendations.
 
 ## CI/CD Note
 
@@ -199,3 +235,5 @@ git push
 - The sample incident and runbook corpus are synthetic.
 - A production deployment should add authn/authz, audit retention, runbook ownership,
   approval workflow, and optional human-reviewed LLM summarization.
+- The readiness review is a deterministic pre-handoff gate, not proof that the generated
+  runbook was executed in production.

@@ -18,6 +18,20 @@ def test_api_generate_returns_runbook() -> None:
     assert body["matched_sections"][0]["id"] == "payments-latency-sev2"
 
 
+def test_api_review_returns_readiness_report() -> None:
+    client = TestClient(app)
+    generate_payload = json.loads(Path("samples/api_request.json").read_text())
+    runbook = client.post("/generate", json=generate_payload).json()
+
+    response = client.post("/review", json={"runbook": runbook})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["decision"] == "review"
+    assert body["required_human_approval"] is True
+    assert "approval_required" in {finding["code"] for finding in body["findings"]}
+
+
 def test_metrics_endpoint() -> None:
     client = TestClient(app)
 
@@ -25,4 +39,4 @@ def test_metrics_endpoint() -> None:
 
     assert response.status_code == 200
     assert "runbook_generations_total" in response.text
-
+    assert "runbook_reviews_total" in response.text

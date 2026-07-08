@@ -4,7 +4,16 @@ import argparse
 from pathlib import Path
 
 from runbook_generator.generator import generate_runbook
-from runbook_generator.io import load_incident, load_runbooks, render_markdown, write_json, write_text
+from runbook_generator.io import (
+    load_generated_runbook,
+    load_incident,
+    load_runbooks,
+    render_markdown,
+    render_review_markdown,
+    write_json,
+    write_text,
+)
+from runbook_generator.review import review_runbook
 
 
 def main() -> int:
@@ -17,6 +26,13 @@ def main() -> int:
     generate.add_argument("--output", required=True, type=Path)
     generate.add_argument("--format", choices=["json", "markdown"], default="json")
     generate.add_argument("--min-confidence", type=float, default=0.2)
+
+    review = subparsers.add_parser("review")
+    review.add_argument("--runbook", required=True, type=Path)
+    review.add_argument("--output", required=True, type=Path)
+    review.add_argument("--format", choices=["json", "markdown"], default="json")
+    review.add_argument("--min-confidence", type=float, default=0.35)
+    review.add_argument("--fail-on-review", action="store_true")
 
     args = parser.parse_args()
     if args.command == "generate":
@@ -32,6 +48,22 @@ def main() -> int:
             f"confidence={draft.confidence:.3f} redactions={draft.redaction_count}"
         )
         return 0 if draft.status == "ready" else 2
+    if args.command == "review":
+        draft = load_generated_runbook(args.runbook)
+        report = review_runbook(draft, min_confidence=args.min_confidence)
+        if args.format == "markdown":
+            write_text(args.output, render_review_markdown(report))
+        else:
+            write_json(args.output, report.model_dump())
+        print(
+            f"{report.decision}: {report.service} {report.severity} "
+            f"score={report.readiness_score}/100 findings={len(report.findings)}"
+        )
+        if report.decision == "block":
+            return 2
+        if report.decision == "review" and args.fail_on_review:
+            return 1
+        return 0
     return 1
 
 

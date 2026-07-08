@@ -48,3 +48,20 @@ class GeneratedRunbook(BaseModel):
     redaction_count: int
     status: str
 
+
+class ReviewFinding(BaseModel):
+    code: str
+    severity: str = Field(pattern="^(info|warn|blocker)$")
+    message: str
+    recommendation: str
+
+
+class RunbookReview(BaseModel):
+    service: str
+    title: str
+    severity: str
+    decision: str = Field(pattern="^(approve|review|block)$")
+    readiness_score: int
+    summary: str
+    findings: list[ReviewFinding]
+    required_human_approval: bool

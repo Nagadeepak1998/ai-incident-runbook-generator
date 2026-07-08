@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import os
+import json
 from pathlib import Path
 
 
@@ -29,3 +30,59 @@ def test_cli_writes_report(tmp_path: Path) -> None:
     assert result.returncode == 0
     assert "ready: payments-api sev2" in result.stdout
     assert output.exists()
+
+
+def test_cli_writes_readiness_review(tmp_path: Path) -> None:
+    runbook = tmp_path / "runbook.json"
+    output = tmp_path / "review.md"
+    runbook.write_text(Path("reports/payment_latency_runbook.json").read_text())
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "runbook_generator.cli",
+            "review",
+            "--runbook",
+            str(runbook),
+            "--format",
+            "markdown",
+            "--output",
+            str(output),
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+        env={**os.environ, "PYTHONPATH": "src:."},
+    )
+
+    assert result.returncode == 0
+    assert "review: payments-api sev2" in result.stdout
+    assert "`approval_required`" in output.read_text()
+
+
+def test_cli_review_fail_on_review_returns_one(tmp_path: Path) -> None:
+    runbook = tmp_path / "runbook.json"
+    output = tmp_path / "review.json"
+    runbook.write_text(Path("reports/payment_latency_runbook.json").read_text())
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "runbook_generator.cli",
+            "review",
+            "--runbook",
+            str(runbook),
+            "--output",
+            str(output),
+            "--fail-on-review",
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+        env={**os.environ, "PYTHONPATH": "src:."},
+    )
+
+    assert result.returncode == 1
+    assert json.loads(output.read_text())["decision"] == "review"

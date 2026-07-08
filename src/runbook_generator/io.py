@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from runbook_generator.models import GeneratedRunbook, Incident, RunbookSection
+from runbook_generator.models import GeneratedRunbook, Incident, RunbookReview, RunbookSection
 
 
 def load_incident(path: Path) -> Incident:
@@ -13,6 +13,10 @@ def load_incident(path: Path) -> Incident:
 def load_runbooks(path: Path) -> list[RunbookSection]:
     raw = json.loads(path.read_text())
     return [RunbookSection.model_validate(item) for item in raw["sections"]]
+
+
+def load_generated_runbook(path: Path) -> GeneratedRunbook:
+    return GeneratedRunbook.model_validate_json(path.read_text())
 
 
 def write_json(path: Path, payload: dict) -> None:
@@ -51,6 +55,34 @@ def render_markdown(draft: GeneratedRunbook) -> str:
         f"- `{match.id}`: {match.title} (score={match.score})" for match in draft.matched_sections
     )
     lines.extend(["", "## Escalation", "", draft.escalation, ""])
+    return "\n".join(lines)
+
+
+def render_review_markdown(review: RunbookReview) -> str:
+    lines = [
+        f"# Runbook Readiness Review: {review.service}",
+        "",
+        f"- Title: {review.title}",
+        f"- Severity: `{review.severity}`",
+        f"- Decision: `{review.decision}`",
+        f"- Readiness score: `{review.readiness_score}/100`",
+        f"- Human approval required: `{str(review.required_human_approval).lower()}`",
+        "",
+        "## Summary",
+        "",
+        review.summary,
+        "",
+        "## Findings",
+        "",
+    ]
+    lines.extend(
+        (
+            f"- `{finding.severity}` `{finding.code}`: {finding.message} "
+            f"Recommendation: {finding.recommendation}"
+        )
+        for finding in review.findings
+    )
+    lines.append("")
     return "\n".join(lines)
 
 
