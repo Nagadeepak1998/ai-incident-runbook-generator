@@ -65,3 +65,35 @@ class RunbookReview(BaseModel):
     summary: str
     findings: list[ReviewFinding]
     required_human_approval: bool
+
+
+class RunbookHistoryWindow(BaseModel):
+    run_id: str
+    generated_at: str
+    runbook: GeneratedRunbook
+
+
+class ReviewedRunbookWindow(BaseModel):
+    run_id: str
+    generated_at: str
+    service: str
+    severity: str
+    confidence: float
+    decision: str
+    readiness_score: int
+    redaction_count: int
+    finding_codes: list[str]
+
+
+class RunbookHistoryReview(BaseModel):
+    status: str = Field(pattern="^(pass|review|block)$")
+    reviewed_windows: int
+    blocked_windows: int
+    review_windows: int
+    approval_required_windows: int
+    total_redactions: int
+    latest_decision: str
+    latest_service: str
+    summary: str
+    windows: list[ReviewedRunbookWindow]
+    recommendations: list[str]

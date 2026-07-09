@@ -1,0 +1,21 @@
+{
+  "service": "search-api",
+  "title": "Search results return elevated 5xx responses",
+  "severity": "sev3",
+  "alerts": [
+    "search-api 5xx rate is 3.8 percent for 18 minutes",
+    "query latency above baseline on shard group blue"
+  ],
+  "logs": [
+    "index refresh lag observed for product-catalog",
+    "search query failures increased after index build search-2026.07.01"
+  ],
+  "metrics": {
+    "error_rate_percent": 3.8,
+    "p95_latency_ms": 740,
+    "index_refresh_lag_seconds": 420
+  },
+  "recent_changes": [
+    "deployed search-2026.07.01 index schema update"
+  ]
+}

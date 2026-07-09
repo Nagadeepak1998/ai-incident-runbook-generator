@@ -20,6 +20,11 @@ This upgrade also adds a runbook readiness review gate. The gate checks whether 
 generated draft has enough confidence, evidence, checks, actions, escalation guidance, and
 human approval coverage before it is handed to an on-call engineer.
 
+The latest upgrade adds a runbook quality history review. It replays dated incident
+windows through the same generator, summarizes pass/review/block decisions, counts
+redactions, and produces a Markdown artifact that shows whether generated runbooks are
+getting safer or drifting toward manual escalation.
+
 ## Architecture
 
 ```mermaid
@@ -30,13 +35,15 @@ flowchart LR
     D --> E[Evidence scoring]
     E --> F[Runbook draft]
     F --> G[Readiness review]
-    G --> H[CLI report artifact]
-    G --> I[FastAPI /review]
-    F --> J[FastAPI /generate]
-    J --> K[Prometheus /metrics]
-    J --> L[Docker image]
-    L --> M[Kubernetes manifests]
-    L --> N[Terraform ECR/logging skeleton]
+    G --> H[Quality history review]
+    H --> I[CLI report artifacts]
+    G --> J[FastAPI /review]
+    F --> K[FastAPI /generate]
+    H --> L[FastAPI /history]
+    K --> M[Prometheus /metrics]
+    K --> N[Docker image]
+    N --> O[Kubernetes manifests]
+    N --> P[Terraform ECR/logging skeleton]
 ```
 
 ## What It Demonstrates
@@ -45,6 +52,7 @@ flowchart LR
 - Retrieval-style ranking, evidence scoring, redaction, and deterministic output
 - Shared business logic across CLI and FastAPI
 - Runbook readiness review with approve, review, and block decisions
+- Multi-window runbook quality history with redaction and readiness trend evidence
 - Prometheus metrics for generated drafts, review decisions, confidence, readiness, and latency
 - Tests, linting, Docker, Kubernetes, Terraform skeleton, and CI-ready automation
 
@@ -79,11 +87,13 @@ make lint
 make sample
 make sample-markdown
 make sample-review
+make history-report
 ```
 
 Output is written to `reports/payment_latency_runbook.json`.
 The Markdown version is written to `reports/payment_latency_runbook.md`.
 The readiness review is written to `reports/payment_latency_readiness_review.md`.
+The history review is written to `reports/runbook_quality_history.md`.
 
 Direct CLI:
 
@@ -117,6 +127,18 @@ PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli review \
 Use `--fail-on-review` when this command should fail the pipeline for drafts that need
 manual review, not only drafts that are fully blocked.
 
+Review a dated set of generated runbooks:
+
+```bash
+PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli history \
+  --manifest samples/history_manifest.json \
+  --format markdown \
+  --output reports/runbook_quality_history.md
+```
+
+The sample history intentionally returns `block` because one unknown billing incident lacks
+enough approved runbook confidence for an on-call handoff.
+
 ## Run the API
 
 ```bash
@@ -146,6 +168,14 @@ RUNBOOK_JSON="$(curl -s -X POST http://localhost:8080/generate \
 curl -X POST http://localhost:8080/review \
   -H "Content-Type: application/json" \
   -d "{\"runbook\":$RUNBOOK_JSON}"
+```
+
+History review:
+
+```bash
+curl -X POST http://localhost:8080/history \
+  -H "Content-Type: application/json" \
+  -d '{"windows":[{"run_id":"example","generated_at":"2026-07-03T18:45:00Z","runbook":'"$RUNBOOK_JSON"'}]}'
 ```
 
 Metrics:
@@ -202,10 +232,13 @@ Prometheus-compatible metrics exposed at `/metrics`:
 - `runbook_generation_seconds`
 - `runbook_reviews_total{decision=...}`
 - `runbook_readiness_score`
+- `runbook_history_reviews_total{status=...}`
 
 The generated draft also includes `redaction_count`, `matched_sections`, and `risk_flags`.
 The readiness review includes `decision`, `readiness_score`, `required_human_approval`, and
 finding-level recommendations.
+The history review includes `status`, per-window readiness decisions, redaction totals, and
+recommendations for blocked or approval-required drafts.
 
 ## CI/CD Note
 

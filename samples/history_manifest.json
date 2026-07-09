@@ -1,0 +1,23 @@
+{
+  "windows": [
+    {
+      "run_id": "2026-07-01-payment-latency",
+      "generated_at": "2026-07-01T09:15:00Z",
+      "incident_path": "payment_latency_incident.json",
+      "runbooks_path": "runbook_corpus.json"
+    },
+    {
+      "run_id": "2026-07-02-search-errors",
+      "generated_at": "2026-07-02T14:30:00Z",
+      "incident_path": "search_error_incident.json",
+      "runbooks_path": "runbook_corpus.json"
+    },
+    {
+      "run_id": "2026-07-03-billing-unknown",
+      "generated_at": "2026-07-03T18:45:00Z",
+      "incident_path": "billing_unknown_incident.json",
+      "runbooks_path": "runbook_corpus.json",
+      "min_confidence": 0.99
+    }
+  ]
+}

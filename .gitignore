@@ -9,3 +9,4 @@ reports/*.md
 !reports/payment_latency_runbook.json
 !reports/payment_latency_runbook.md
 !reports/payment_latency_readiness_review.md
+!reports/runbook_quality_history.md

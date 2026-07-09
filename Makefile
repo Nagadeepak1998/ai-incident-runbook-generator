@@ -1,4 +1,4 @@
-.PHONY: setup test lint sample sample-markdown sample-review run smoke docker-build docker-run clean
+.PHONY: setup test lint sample sample-markdown sample-review history-report run smoke docker-build docker-run clean
 
 setup:
 	python3 -m venv .venv
@@ -29,6 +29,12 @@ sample-review: sample
 		--runbook reports/payment_latency_runbook.json \
 		--format markdown \
 		--output reports/payment_latency_readiness_review.md
+
+history-report:
+	PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli history \
+		--manifest samples/history_manifest.json \
+		--format markdown \
+		--output reports/runbook_quality_history.md || test $$? -eq 2
 
 run:
 	.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080

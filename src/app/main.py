@@ -3,9 +3,17 @@ from __future__ import annotations
 from fastapi import FastAPI, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
-from app.metrics import CONFIDENCE, GENERATIONS, LATENCY, READINESS, REVIEWS
+from app.metrics import CONFIDENCE, GENERATIONS, HISTORY_REVIEWS, LATENCY, READINESS, REVIEWS
 from runbook_generator.generator import generate_runbook
-from runbook_generator.models import GeneratedRunbook, Incident, RunbookReview, RunbookSection
+from runbook_generator.history import review_history
+from runbook_generator.models import (
+    GeneratedRunbook,
+    Incident,
+    RunbookHistoryReview,
+    RunbookHistoryWindow,
+    RunbookReview,
+    RunbookSection,
+)
 from runbook_generator.review import review_runbook
 
 app = FastAPI(
@@ -41,6 +49,15 @@ def review(payload: dict) -> RunbookReview:
     report = review_runbook(draft, min_confidence=min_confidence)
     REVIEWS.labels(decision=report.decision).inc()
     READINESS.set(report.readiness_score)
+    return report
+
+
+@app.post("/history", response_model=RunbookHistoryReview)
+def history(payload: dict) -> RunbookHistoryReview:
+    windows = [RunbookHistoryWindow.model_validate(item) for item in payload["windows"]]
+    min_confidence = float(payload.get("min_confidence", 0.35))
+    report = review_history(windows, min_confidence=min_confidence)
+    HISTORY_REVIEWS.labels(status=report.status).inc()
     return report
 
 

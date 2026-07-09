@@ -14,6 +14,7 @@ This project implements the safer platform pattern first:
 - retrieve from approved runbook sections
 - show matched evidence and confidence
 - review generated drafts for handoff readiness before an engineer acts on them
+- replay dated incident windows to catch runbook quality drift and redaction trends
 - make the same engine available through CLI and API
 - expose metrics so platform teams can track quality and usage
 
@@ -24,7 +25,8 @@ This project implements the safer platform pattern first:
 - `runbook_generator.generator` creates a deterministic runbook draft
 - `runbook_generator.review` applies readiness checks for evidence, escalation, approval,
   and confidence
-- `app.main` exposes `/health`, `/generate`, `/review`, and `/metrics`
+- `runbook_generator.history` reviews multi-window readiness and redaction quality
+- `app.main` exposes `/health`, `/generate`, `/review`, `/history`, and `/metrics`
 - tests cover redaction, retrieval, CLI output, and API behavior
 - Docker, Kubernetes, Terraform, and CI templates are included for deployment review
 
@@ -39,10 +41,15 @@ sent for manual review, or blocked based on deterministic findings. The sample p
 incident returns `review` because a SEV2 incident still requires incident-commander
 approval even when the generated runbook is grounded and redacted.
 
+The history review turns one-off quality checks into a release-readiness signal. The
+tracked sample report reviews three dated incident windows and blocks handoff because the
+latest billing incident does not have enough approved runbook confidence.
+
 ## Evidence To Show Recruiters
 
 - CLI and API parity for the same incident workflow
 - CLI and API parity for readiness review through `runbook-generator review` and `/review`
+- CLI and API parity for quality history through `runbook-generator history` and `/history`
 - safety controls around prompt inputs and log evidence
 - deterministic Markdown artifacts in `reports/`
 - deployment manifests with health checks, metrics, and container hardening

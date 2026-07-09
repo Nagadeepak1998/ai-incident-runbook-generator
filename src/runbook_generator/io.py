@@ -3,7 +3,13 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from runbook_generator.models import GeneratedRunbook, Incident, RunbookReview, RunbookSection
+from runbook_generator.models import (
+    GeneratedRunbook,
+    Incident,
+    RunbookHistoryReview,
+    RunbookReview,
+    RunbookSection,
+)
 
 
 def load_incident(path: Path) -> Incident:
@@ -82,6 +88,39 @@ def render_review_markdown(review: RunbookReview) -> str:
         )
         for finding in review.findings
     )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_history_markdown(review: RunbookHistoryReview) -> str:
+    lines = [
+        "# Runbook Quality History Review",
+        "",
+        f"- Status: `{review.status}`",
+        f"- Reviewed windows: `{review.reviewed_windows}`",
+        f"- Blocked windows: `{review.blocked_windows}`",
+        f"- Review windows: `{review.review_windows}`",
+        f"- Approval required windows: `{review.approval_required_windows}`",
+        f"- Total redactions: `{review.total_redactions}`",
+        f"- Latest decision: `{review.latest_decision}`",
+        "",
+        "## Summary",
+        "",
+        review.summary,
+        "",
+        "## Windows",
+        "",
+    ]
+    lines.extend(
+        (
+            f"- `{window.run_id}` `{window.decision}` {window.service} "
+            f"{window.severity} score={window.readiness_score}/100 "
+            f"redactions={window.redaction_count} findings={', '.join(window.finding_codes) or 'none'}"
+        )
+        for window in review.windows
+    )
+    lines.extend(["", "## Recommendations", ""])
+    lines.extend(f"- {item}" for item in review.recommendations)
     lines.append("")
     return "\n".join(lines)
 

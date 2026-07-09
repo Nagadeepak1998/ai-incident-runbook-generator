@@ -41,7 +41,8 @@
       ],
       "actions": [
         "Throttle expensive query classes if error rate keeps rising.",
-        "Restart unhealthy search pods only after confirming shard health."
+        "Restart unhealthy search pods only after confirming shard health.",
+        "Capture index build identifier and attach shard-level evidence."
       ],
       "escalation": "Escalate to search platform owner if 5xx rate remains above threshold."
     },
@@ -65,4 +66,3 @@
     }
   ]
 }
-
