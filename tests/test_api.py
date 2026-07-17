@@ -40,3 +40,14 @@ def test_metrics_endpoint() -> None:
     assert response.status_code == 200
     assert "runbook_generations_total" in response.text
     assert "runbook_reviews_total" in response.text
+
+
+def test_api_reviews_runbook_execution() -> None:
+    client = TestClient(app)
+    payload = json.loads(Path("samples/payment_execution_manifest.json").read_text())
+
+    response = client.post("/execution/review", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["status"] == "blocked"
+    assert response.json()["expired_steps"] == 2

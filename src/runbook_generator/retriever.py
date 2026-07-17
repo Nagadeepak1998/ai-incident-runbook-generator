@@ -73,4 +73,3 @@ def _score(
     severity_bonus = 2.0 if section.severity.lower() == incident.severity.lower() else 0.0
     keyword_bonus = sum(1.5 for keyword in section.keywords if keyword.lower() in incident_terms)
     return overlap + service_bonus + severity_bonus + keyword_bonus
-

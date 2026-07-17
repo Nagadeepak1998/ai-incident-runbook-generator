@@ -97,3 +97,40 @@ class RunbookHistoryReview(BaseModel):
     summary: str
     windows: list[ReviewedRunbookWindow]
     recommendations: list[str]
+
+
+class ExecutionStep(BaseModel):
+    step_id: str
+    action: str
+    owner: str = ""
+    status: str = Field(pattern="^(pending|completed|skipped)$")
+    expires_at: str
+    evidence: list[str] = Field(default_factory=list)
+
+
+class ExecutionManifest(BaseModel):
+    incident_id: str
+    service: str
+    runbook_id: str
+    reference_time: str
+    steps: list[ExecutionStep]
+
+
+class ExecutionFinding(BaseModel):
+    code: str
+    step_id: str
+    severity: str = Field(pattern="^(warn|blocker)$")
+    message: str
+
+
+class ExecutionReview(BaseModel):
+    incident_id: str
+    service: str
+    runbook_id: str
+    status: str = Field(pattern="^(verified|blocked)$")
+    reviewed_steps: int
+    completed_steps: int
+    open_steps: int
+    expired_steps: int
+    findings: list[ExecutionFinding]
+    summary: str

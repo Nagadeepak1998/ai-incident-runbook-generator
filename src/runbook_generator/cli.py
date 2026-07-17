@@ -4,12 +4,15 @@ import argparse
 from pathlib import Path
 
 from runbook_generator.generator import generate_runbook
+from runbook_generator.execution import review_execution
 from runbook_generator.history import load_history_manifest, review_history
 from runbook_generator.io import (
     load_generated_runbook,
+    load_execution_manifest,
     load_incident,
     load_runbooks,
     render_history_markdown,
+    render_execution_markdown,
     render_markdown,
     render_review_markdown,
     write_json,
@@ -41,6 +44,11 @@ def main() -> int:
     history.add_argument("--output", required=True, type=Path)
     history.add_argument("--format", choices=["json", "markdown"], default="json")
     history.add_argument("--min-confidence", type=float, default=0.35)
+
+    execution = subparsers.add_parser("execution")
+    execution.add_argument("--manifest", required=True, type=Path)
+    execution.add_argument("--output", required=True, type=Path)
+    execution.add_argument("--format", choices=["json", "markdown"], default="json")
 
     args = parser.parse_args()
     if args.command == "generate":
@@ -85,6 +93,18 @@ def main() -> int:
             f"redactions={report.total_redactions}"
         )
         return 2 if report.status == "block" else 0
+    if args.command == "execution":
+        report = review_execution(load_execution_manifest(args.manifest))
+        if args.format == "markdown":
+            write_text(args.output, render_execution_markdown(report))
+        else:
+            write_json(args.output, report.model_dump())
+        print(
+            f"{report.status}: steps={report.reviewed_steps} completed={report.completed_steps} "
+            f"open={report.open_steps} expired={report.expired_steps} "
+            f"findings={len(report.findings)}"
+        )
+        return 2 if report.status == "blocked" else 0
     return 1
 
 

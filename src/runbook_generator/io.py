@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 
 from runbook_generator.models import (
+    ExecutionManifest,
+    ExecutionReview,
     GeneratedRunbook,
     Incident,
     RunbookHistoryReview,
@@ -23,6 +25,10 @@ def load_runbooks(path: Path) -> list[RunbookSection]:
 
 def load_generated_runbook(path: Path) -> GeneratedRunbook:
     return GeneratedRunbook.model_validate_json(path.read_text())
+
+
+def load_execution_manifest(path: Path) -> ExecutionManifest:
+    return ExecutionManifest.model_validate_json(path.read_text())
 
 
 def write_json(path: Path, payload: dict) -> None:
@@ -121,6 +127,34 @@ def render_history_markdown(review: RunbookHistoryReview) -> str:
     )
     lines.extend(["", "## Recommendations", ""])
     lines.extend(f"- {item}" for item in review.recommendations)
+    lines.append("")
+    return "\n".join(lines)
+
+
+def render_execution_markdown(review: ExecutionReview) -> str:
+    lines = [
+        f"# Runbook Execution Review: {review.incident_id}",
+        "",
+        f"- Service: `{review.service}`",
+        f"- Runbook: `{review.runbook_id}`",
+        f"- Status: `{review.status}`",
+        f"- Completed steps: `{review.completed_steps}/{review.reviewed_steps}`",
+        f"- Open steps: `{review.open_steps}`",
+        f"- Expired steps: `{review.expired_steps}`",
+        "",
+        "## Summary",
+        "",
+        review.summary,
+        "",
+        "## Findings",
+        "",
+    ]
+    lines.extend(
+        f"- `{finding.severity}` `{finding.code}` `{finding.step_id}`: {finding.message}"
+        for finding in review.findings
+    )
+    if not review.findings:
+        lines.append("- None. Every step has valid ownership, timing, and evidence.")
     lines.append("")
     return "\n".join(lines)
 

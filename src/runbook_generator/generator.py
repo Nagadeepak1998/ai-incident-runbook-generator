@@ -87,4 +87,3 @@ def _risk_flags(incident: Incident, confidence: float) -> list[str]:
     if not incident.logs:
         flags.append("missing_log_evidence")
     return flags
-

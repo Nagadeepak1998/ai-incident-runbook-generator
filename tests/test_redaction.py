@@ -10,4 +10,3 @@ def test_redacts_bearer_and_api_key() -> None:
     assert "abcdefghijklmnopqrstuvwxyz" not in redacted
     assert "prod_secret_value" not in redacted
     assert "[REDACTED]" in redacted
-

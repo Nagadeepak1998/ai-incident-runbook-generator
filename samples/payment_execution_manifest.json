@@ -1,0 +1,32 @@
+{
+  "incident_id": "INC-2026-0717-042",
+  "service": "payments-api",
+  "runbook_id": "payments-latency-sev2",
+  "reference_time": "2026-07-17T16:30:00Z",
+  "steps": [
+    {
+      "step_id": "check-upstream-latency",
+      "action": "Confirm payment gateway latency and error rate.",
+      "owner": "payments-oncall",
+      "status": "completed",
+      "expires_at": "2026-07-17T16:15:00Z",
+      "evidence": ["dashboard://payments/gateway-latency?incident=INC-2026-0717-042"]
+    },
+    {
+      "step_id": "pause-retries",
+      "action": "Pause aggressive retries before they amplify gateway load.",
+      "owner": "",
+      "status": "pending",
+      "expires_at": "2026-07-17T16:20:00Z",
+      "evidence": []
+    },
+    {
+      "step_id": "validate-recovery",
+      "action": "Verify latency and error rate remain below the recovery threshold.",
+      "owner": "incident-commander",
+      "status": "completed",
+      "expires_at": "2026-07-17T16:45:00Z",
+      "evidence": []
+    }
+  ]
+}

@@ -3,11 +3,22 @@ from __future__ import annotations
 from fastapi import FastAPI, Response
 from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
-from app.metrics import CONFIDENCE, GENERATIONS, HISTORY_REVIEWS, LATENCY, READINESS, REVIEWS
+from app.metrics import (
+    CONFIDENCE,
+    EXECUTION_REVIEWS,
+    GENERATIONS,
+    HISTORY_REVIEWS,
+    LATENCY,
+    READINESS,
+    REVIEWS,
+)
+from runbook_generator.execution import review_execution
 from runbook_generator.generator import generate_runbook
 from runbook_generator.history import review_history
 from runbook_generator.models import (
     GeneratedRunbook,
+    ExecutionManifest,
+    ExecutionReview,
     Incident,
     RunbookHistoryReview,
     RunbookHistoryWindow,
@@ -18,7 +29,7 @@ from runbook_generator.review import review_runbook
 
 app = FastAPI(
     title="AI Incident Runbook Generator",
-    version="0.1.0",
+    version="0.2.0",
     description="Sanitized retrieval-backed runbook drafts for incident response.",
 )
 
@@ -58,6 +69,13 @@ def history(payload: dict) -> RunbookHistoryReview:
     min_confidence = float(payload.get("min_confidence", 0.35))
     report = review_history(windows, min_confidence=min_confidence)
     HISTORY_REVIEWS.labels(status=report.status).inc()
+    return report
+
+
+@app.post("/execution/review", response_model=ExecutionReview)
+def execution_review(payload: ExecutionManifest) -> ExecutionReview:
+    report = review_execution(payload)
+    EXECUTION_REVIEWS.labels(status=report.status).inc()
     return report
 
 

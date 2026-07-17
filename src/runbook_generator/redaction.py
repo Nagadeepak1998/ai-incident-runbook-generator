@@ -36,4 +36,3 @@ def _replacement(raw: str) -> str:
     if ":" in raw:
         return f"{raw.split(':', 1)[0]}: [REDACTED]"
     return "[REDACTED]"
-

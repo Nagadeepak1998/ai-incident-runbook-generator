@@ -25,6 +25,10 @@ windows through the same generator, summarizes pass/review/block decisions, coun
 redactions, and produces a Markdown artifact that shows whether generated runbooks are
 getting safer or drifting toward manual escalation.
 
+The execution-verification gate closes the next operational gap: it checks that every
+runbook step has an owner, has not expired while still open, and includes evidence when
+marked complete. An explicit reference time keeps CI and incident audits reproducible.
+
 ## Architecture
 
 ```mermaid
@@ -36,6 +40,8 @@ flowchart LR
     E --> F[Runbook draft]
     F --> G[Readiness review]
     G --> H[Quality history review]
+    G --> Q[Execution verification]
+    Q --> R[CLI and API audit evidence]
     H --> I[CLI report artifacts]
     G --> J[FastAPI /review]
     F --> K[FastAPI /generate]
@@ -53,6 +59,7 @@ flowchart LR
 - Shared business logic across CLI and FastAPI
 - Runbook readiness review with approve, review, and block decisions
 - Multi-window runbook quality history with redaction and readiness trend evidence
+- Runbook execution governance for ownership, expiry, completion evidence, and skipped steps
 - Prometheus metrics for generated drafts, review decisions, confidence, readiness, and latency
 - Tests, linting, Docker, Kubernetes, Terraform skeleton, and CI-ready automation
 
@@ -88,12 +95,15 @@ make sample
 make sample-markdown
 make sample-review
 make history-report
+make execution-report
 ```
 
 Output is written to `reports/payment_latency_runbook.json`.
 The Markdown version is written to `reports/payment_latency_runbook.md`.
 The readiness review is written to `reports/payment_latency_readiness_review.md`.
 The history review is written to `reports/runbook_quality_history.md`.
+The execution review is written to `reports/payment_execution_review.md` and intentionally
+blocks an expired, unowned step plus a completed step without evidence.
 
 Direct CLI:
 
@@ -139,6 +149,17 @@ PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli history \
 The sample history intentionally returns `block` because one unknown billing incident lacks
 enough approved runbook confidence for an on-call handoff.
 
+Verify runbook execution accountability:
+
+```bash
+PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli execution \
+  --manifest samples/payment_execution_manifest.json \
+  --format markdown \
+  --output reports/payment_execution_review.md
+```
+
+The command returns exit code `2` when governance findings block verified execution.
+
 ## Run the API
 
 ```bash
@@ -176,6 +197,14 @@ History review:
 curl -X POST http://localhost:8080/history \
   -H "Content-Type: application/json" \
   -d '{"windows":[{"run_id":"example","generated_at":"2026-07-03T18:45:00Z","runbook":'"$RUNBOOK_JSON"'}]}'
+```
+
+Execution review:
+
+```bash
+curl -X POST http://localhost:8080/execution/review \
+  -H "Content-Type: application/json" \
+  --data-binary @samples/payment_execution_manifest.json
 ```
 
 Metrics:
@@ -233,12 +262,15 @@ Prometheus-compatible metrics exposed at `/metrics`:
 - `runbook_reviews_total{decision=...}`
 - `runbook_readiness_score`
 - `runbook_history_reviews_total{status=...}`
+- `runbook_execution_reviews_total{status=...}`
 
 The generated draft also includes `redaction_count`, `matched_sections`, and `risk_flags`.
 The readiness review includes `decision`, `readiness_score`, `required_human_approval`, and
 finding-level recommendations.
 The history review includes `status`, per-window readiness decisions, redaction totals, and
 recommendations for blocked or approval-required drafts.
+The execution review includes completion counts, expired-step counts, and finding codes that
+identify missing ownership, stale open work, unsupported completion, or undocumented skips.
 
 ## CI/CD Note
 
@@ -266,7 +298,7 @@ git push
 
 - Retrieval uses transparent keyword scoring instead of vector embeddings.
 - The sample incident and runbook corpus are synthetic.
-- A production deployment should add authn/authz, audit retention, runbook ownership,
-  approval workflow, and optional human-reviewed LLM summarization.
-- The readiness review is a deterministic pre-handoff gate, not proof that the generated
-  runbook was executed in production.
+- A production deployment should add authn/authz, durable audit retention, approval workflow,
+  and optional human-reviewed LLM summarization.
+- Execution evidence is reference metadata; production integrations should validate links
+  against trusted ticket, dashboard, and change-management systems.

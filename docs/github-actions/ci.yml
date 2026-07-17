@@ -34,3 +34,12 @@ jobs:
             --output reports/payment_latency_runbook.md
       - name: Docker build
         run: docker build -f infra/docker/Dockerfile -t ai-incident-runbook-generator:ci .
+      - name: Execution governance gate
+        run: |
+          set +e
+          runbook-generator execution \
+            --manifest samples/payment_execution_manifest.json \
+            --output reports/payment_execution_review.json
+          status=$?
+          set -e
+          test "$status" -eq 2

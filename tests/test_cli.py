@@ -86,3 +86,30 @@ def test_cli_review_fail_on_review_returns_one(tmp_path: Path) -> None:
 
     assert result.returncode == 1
     assert json.loads(output.read_text())["decision"] == "review"
+
+
+def test_cli_execution_returns_blocking_gate_code(tmp_path: Path) -> None:
+    output = tmp_path / "execution.md"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "runbook_generator.cli",
+            "execution",
+            "--manifest",
+            "samples/payment_execution_manifest.json",
+            "--format",
+            "markdown",
+            "--output",
+            str(output),
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+        env={**os.environ, "PYTHONPATH": "src:."},
+    )
+
+    assert result.returncode == 2
+    assert "blocked: steps=3 completed=2 open=1 expired=2 findings=3" in result.stdout
+    assert "`missing_owner`" in output.read_text()
