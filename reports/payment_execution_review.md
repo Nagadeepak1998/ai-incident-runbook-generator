@@ -16,4 +16,3 @@ Runbook execution is blocked: 2/3 steps completed with 3 governance finding(s).
 - `blocker` `missing_owner` `pause-retries`: Execution step has no accountable owner.
 - `blocker` `expired_open_step` `pause-retries`: Open step expired at 2026-07-17T16:20:00Z.
 - `blocker` `missing_completion_evidence` `validate-recovery`: Completed step has no command, dashboard, ticket, or log evidence.
-

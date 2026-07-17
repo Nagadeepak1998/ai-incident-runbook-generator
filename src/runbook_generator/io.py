@@ -155,7 +155,6 @@ def render_execution_markdown(review: ExecutionReview) -> str:
     )
     if not review.findings:
         lines.append("- None. Every step has valid ownership, timing, and evidence.")
-    lines.append("")
     return "\n".join(lines)
 
 
