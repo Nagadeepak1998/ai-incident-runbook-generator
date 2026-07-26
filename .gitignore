@@ -2,6 +2,7 @@
 __pycache__/
 .pytest_cache/
 .ruff_cache/
+.terraform/
 *.egg-info/
 reports/*.json
 reports/*.md
@@ -10,3 +11,5 @@ reports/*.md
 !reports/payment_latency_runbook.md
 !reports/payment_latency_readiness_review.md
 !reports/runbook_quality_history.md
+!reports/payment_drill_readiness.md
+!reports/stale_drill_readiness.md
