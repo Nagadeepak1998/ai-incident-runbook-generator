@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 
 from runbook_generator.models import (
+    DrillManifest,
+    DrillReview,
     ExecutionManifest,
     ExecutionReview,
     GeneratedRunbook,
@@ -29,6 +31,10 @@ def load_generated_runbook(path: Path) -> GeneratedRunbook:
 
 def load_execution_manifest(path: Path) -> ExecutionManifest:
     return ExecutionManifest.model_validate_json(path.read_text())
+
+
+def load_drill_manifest(path: Path) -> DrillManifest:
+    return DrillManifest.model_validate_json(path.read_text())
 
 
 def write_json(path: Path, payload: dict) -> None:
@@ -155,6 +161,33 @@ def render_execution_markdown(review: ExecutionReview) -> str:
     )
     if not review.findings:
         lines.append("- None. Every step has valid ownership, timing, and evidence.")
+    return "\n".join(lines)
+
+
+def render_drill_markdown(review: DrillReview) -> str:
+    lines = [
+        f"# Runbook Drill Readiness Review: {review.runbook_id}",
+        "",
+        f"- Service: `{review.service}`",
+        f"- Status: `{review.status}`",
+        f"- Exercised scenarios: `{review.exercised_scenarios}/{review.required_scenarios}`",
+        f"- Fresh exercises: `{review.fresh_exercises}`",
+        f"- Passed exercises: `{review.passed_exercises}`",
+        f"- Evidence fingerprint: `{review.evidence_fingerprint}`",
+        "",
+        "## Summary",
+        "",
+        review.summary,
+        "",
+        "## Findings",
+        "",
+    ]
+    lines.extend(
+        f"- `{finding.severity}` `{finding.code}` `{finding.scenario}`: {finding.message}"
+        for finding in review.findings
+    )
+    if not review.findings:
+        lines.append("- None. Every required scenario has a fresh, owned, passing drill.")
     return "\n".join(lines)
 
 

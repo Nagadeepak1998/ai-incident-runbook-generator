@@ -134,3 +134,40 @@ class ExecutionReview(BaseModel):
     expired_steps: int
     findings: list[ExecutionFinding]
     summary: str
+
+
+class DrillExercise(BaseModel):
+    scenario: str
+    executed_at: str
+    owner: str = ""
+    outcome: str = Field(pattern="^(passed|failed)$")
+    evidence: list[str] = Field(default_factory=list)
+
+
+class DrillManifest(BaseModel):
+    service: str
+    runbook_id: str
+    reference_time: str
+    max_age_days: int = Field(gt=0)
+    required_scenarios: list[str]
+    exercises: list[DrillExercise]
+
+
+class DrillFinding(BaseModel):
+    code: str
+    scenario: str
+    severity: str = Field(pattern="^(warn|blocker)$")
+    message: str
+
+
+class DrillReview(BaseModel):
+    service: str
+    runbook_id: str
+    status: str = Field(pattern="^(ready|blocked)$")
+    required_scenarios: int
+    exercised_scenarios: int
+    fresh_exercises: int
+    passed_exercises: int
+    findings: list[DrillFinding]
+    evidence_fingerprint: str
+    summary: str

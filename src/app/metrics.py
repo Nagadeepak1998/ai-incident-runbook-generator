@@ -13,3 +13,6 @@ HISTORY_REVIEWS = Counter(
 EXECUTION_REVIEWS = Counter(
     "runbook_execution_reviews_total", "Runbook execution verification reviews", ["status"]
 )
+DRILL_REVIEWS = Counter(
+    "runbook_drill_reviews_total", "Runbook drill readiness reviews", ["status"]
+)

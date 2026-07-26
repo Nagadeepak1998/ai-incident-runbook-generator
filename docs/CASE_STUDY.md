@@ -16,6 +16,7 @@ This project implements the safer platform pattern first:
 - review generated drafts for handoff readiness before an engineer acts on them
 - replay dated incident windows to catch runbook quality drift and redaction trends
 - verify step ownership, expiry, and completion evidence after responders start execution
+- verify required runbook scenarios have fresh, owned, passing rehearsal evidence
 - make the same engine available through CLI and API
 - expose metrics so platform teams can track quality and usage
 
@@ -28,8 +29,9 @@ This project implements the safer platform pattern first:
   and confidence
 - `runbook_generator.history` reviews multi-window readiness and redaction quality
 - `runbook_generator.execution` audits runbook step accountability with a reproducible clock
-- `app.main` exposes `/health`, `/generate`, `/review`, `/history`, `/execution/review`, and
-  `/metrics`
+- `runbook_generator.drill` audits scenario coverage, rehearsal age, outcomes, and evidence
+- `app.main` exposes `/health`, `/generate`, `/review`, `/history`, `/execution/review`,
+  `/drills/review`, and `/metrics`
 - tests cover redaction, retrieval, CLI output, and API behavior
 - Docker, Kubernetes, Terraform, and CI templates are included for deployment review
 
@@ -52,6 +54,11 @@ The execution review prevents a well-written draft from being mistaken for compl
 The tracked payment example blocks handoff because one expired step has no owner and another
 step is marked complete without supporting command, dashboard, ticket, or log evidence.
 
+The drill review addresses a different risk: an accurate runbook can still be operationally
+unproven. The ready synthetic example covers two required payment failure scenarios with
+recent passing evidence. A second fixture blocks publication when one exercise is stale and
+another required scenario is missing.
+
 ## Evidence To Show Recruiters
 
 - CLI and API parity for the same incident workflow
@@ -59,6 +66,8 @@ step is marked complete without supporting command, dashboard, ticket, or log ev
 - CLI and API parity for quality history through `runbook-generator history` and `/history`
 - CLI and API parity for execution governance through `runbook-generator execution` and
   `/execution/review`
+- CLI and API parity for drill readiness through `runbook-generator drill` and
+  `/drills/review`
 - safety controls around prompt inputs and log evidence
 - deterministic Markdown artifacts in `reports/`
 - deployment manifests with health checks, metrics, and container hardening

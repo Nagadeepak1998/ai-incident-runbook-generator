@@ -1,4 +1,4 @@
-.PHONY: setup test lint sample sample-markdown sample-review history-report execution-report run smoke docker-build docker-run clean
+.PHONY: setup test lint sample sample-markdown sample-review history-report execution-report drill-report drill-blocked run smoke docker-build docker-run clean
 
 setup:
 	python3 -m venv .venv
@@ -41,6 +41,18 @@ execution-report:
 		--manifest samples/payment_execution_manifest.json \
 		--format markdown \
 		--output reports/payment_execution_review.md || test $$? -eq 2
+
+drill-report:
+	PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli drill \
+		--manifest samples/payment_drill_manifest.json \
+		--format markdown \
+		--output reports/payment_drill_readiness.md
+
+drill-blocked:
+	PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli drill \
+		--manifest samples/stale_drill_manifest.json \
+		--format markdown \
+		--output reports/stale_drill_readiness.md || test $$? -eq 2
 
 run:
 	.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8080

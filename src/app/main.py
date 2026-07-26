@@ -5,6 +5,7 @@ from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.metrics import (
     CONFIDENCE,
+    DRILL_REVIEWS,
     EXECUTION_REVIEWS,
     GENERATIONS,
     HISTORY_REVIEWS,
@@ -12,11 +13,14 @@ from app.metrics import (
     READINESS,
     REVIEWS,
 )
+from runbook_generator.drill import review_drill
 from runbook_generator.execution import review_execution
 from runbook_generator.generator import generate_runbook
 from runbook_generator.history import review_history
 from runbook_generator.models import (
     GeneratedRunbook,
+    DrillManifest,
+    DrillReview,
     ExecutionManifest,
     ExecutionReview,
     Incident,
@@ -29,7 +33,7 @@ from runbook_generator.review import review_runbook
 
 app = FastAPI(
     title="AI Incident Runbook Generator",
-    version="0.2.0",
+    version="0.3.0",
     description="Sanitized retrieval-backed runbook drafts for incident response.",
 )
 
@@ -76,6 +80,13 @@ def history(payload: dict) -> RunbookHistoryReview:
 def execution_review(payload: ExecutionManifest) -> ExecutionReview:
     report = review_execution(payload)
     EXECUTION_REVIEWS.labels(status=report.status).inc()
+    return report
+
+
+@app.post("/drills/review", response_model=DrillReview)
+def drill_review(payload: DrillManifest) -> DrillReview:
+    report = review_drill(payload)
+    DRILL_REVIEWS.labels(status=report.status).inc()
     return report
 
 

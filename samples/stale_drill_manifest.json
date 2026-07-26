@@ -1,0 +1,21 @@
+{
+  "service": "payments-api",
+  "runbook_id": "payments-latency-sev2",
+  "reference_time": "2026-07-26T16:00:00Z",
+  "max_age_days": 90,
+  "required_scenarios": [
+    "database-connection-saturation",
+    "upstream-timeout"
+  ],
+  "exercises": [
+    {
+      "scenario": "database-connection-saturation",
+      "executed_at": "2026-03-01T18:00:00Z",
+      "owner": "payments-platform",
+      "outcome": "passed",
+      "evidence": [
+        "https://tickets.example.invalid/DRILL-074"
+      ]
+    }
+  ]
+}

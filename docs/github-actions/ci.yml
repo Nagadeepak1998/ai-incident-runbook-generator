@@ -43,3 +43,8 @@ jobs:
           status=$?
           set -e
           test "$status" -eq 2
+      - name: Runbook drill readiness gate
+        run: |
+          runbook-generator drill \
+            --manifest samples/payment_drill_manifest.json \
+            --output reports/payment_drill_readiness.json

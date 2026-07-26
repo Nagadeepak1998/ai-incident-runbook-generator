@@ -29,6 +29,10 @@ The execution-verification gate closes the next operational gap: it checks that 
 runbook step has an owner, has not expired while still open, and includes evidence when
 marked complete. An explicit reference time keeps CI and incident audits reproducible.
 
+The drill-readiness gate proves that required failure scenarios were rehearsed recently,
+passed, have accountable owners, and link to reviewable evidence. It produces a stable
+SHA-256 fingerprint so the reviewed rehearsal input can be tied to a release record.
+
 ## Architecture
 
 ```mermaid
@@ -42,6 +46,8 @@ flowchart LR
     G --> H[Quality history review]
     G --> Q[Execution verification]
     Q --> R[CLI and API audit evidence]
+    G --> S[Drill readiness review]
+    S --> T[Freshness and scenario evidence]
     H --> I[CLI report artifacts]
     G --> J[FastAPI /review]
     F --> K[FastAPI /generate]
@@ -60,6 +66,7 @@ flowchart LR
 - Runbook readiness review with approve, review, and block decisions
 - Multi-window runbook quality history with redaction and readiness trend evidence
 - Runbook execution governance for ownership, expiry, completion evidence, and skipped steps
+- Runbook drill readiness for scenario coverage, freshness, ownership, outcomes, and evidence
 - Prometheus metrics for generated drafts, review decisions, confidence, readiness, and latency
 - Tests, linting, Docker, Kubernetes, Terraform skeleton, and CI-ready automation
 
@@ -96,6 +103,8 @@ make sample-markdown
 make sample-review
 make history-report
 make execution-report
+make drill-report
+make drill-blocked
 ```
 
 Output is written to `reports/payment_latency_runbook.json`.
@@ -104,6 +113,8 @@ The readiness review is written to `reports/payment_latency_readiness_review.md`
 The history review is written to `reports/runbook_quality_history.md`.
 The execution review is written to `reports/payment_execution_review.md` and intentionally
 blocks an expired, unowned step plus a completed step without evidence.
+The ready drill review is written to `reports/payment_drill_readiness.md`. The stale fixture
+intentionally returns exit code `2` and writes `reports/stale_drill_readiness.md`.
 
 Direct CLI:
 
@@ -160,6 +171,18 @@ PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli execution \
 
 The command returns exit code `2` when governance findings block verified execution.
 
+Review runbook rehearsal readiness:
+
+```bash
+PYTHONPATH=src:. .venv/bin/python -m runbook_generator.cli drill \
+  --manifest samples/payment_drill_manifest.json \
+  --format markdown \
+  --output reports/payment_drill_readiness.md
+```
+
+The gate returns exit code `2` when a required scenario is missing, stale, failed, unowned,
+or lacks evidence.
+
 ## Run the API
 
 ```bash
@@ -205,6 +228,14 @@ Execution review:
 curl -X POST http://localhost:8080/execution/review \
   -H "Content-Type: application/json" \
   --data-binary @samples/payment_execution_manifest.json
+```
+
+Drill readiness review:
+
+```bash
+curl -X POST http://localhost:8080/drills/review \
+  -H "Content-Type: application/json" \
+  --data-binary @samples/payment_drill_manifest.json
 ```
 
 Metrics:
@@ -263,6 +294,7 @@ Prometheus-compatible metrics exposed at `/metrics`:
 - `runbook_readiness_score`
 - `runbook_history_reviews_total{status=...}`
 - `runbook_execution_reviews_total{status=...}`
+- `runbook_drill_reviews_total{status=...}`
 
 The generated draft also includes `redaction_count`, `matched_sections`, and `risk_flags`.
 The readiness review includes `decision`, `readiness_score`, `required_human_approval`, and
@@ -271,6 +303,8 @@ The history review includes `status`, per-window readiness decisions, redaction 
 recommendations for blocked or approval-required drafts.
 The execution review includes completion counts, expired-step counts, and finding codes that
 identify missing ownership, stale open work, unsupported completion, or undocumented skips.
+The drill review includes required-scenario coverage, fresh and passed exercise counts,
+finding codes, and a deterministic evidence fingerprint.
 
 ## CI/CD Note
 
@@ -302,3 +336,5 @@ git push
   and optional human-reviewed LLM summarization.
 - Execution evidence is reference metadata; production integrations should validate links
   against trusted ticket, dashboard, and change-management systems.
+- Drill evidence is synthetic metadata; this project does not claim that a live production
+  exercise occurred.

@@ -113,3 +113,30 @@ def test_cli_execution_returns_blocking_gate_code(tmp_path: Path) -> None:
     assert result.returncode == 2
     assert "blocked: steps=3 completed=2 open=1 expired=2 findings=3" in result.stdout
     assert "`missing_owner`" in output.read_text()
+
+
+def test_cli_drill_writes_ready_evidence(tmp_path: Path) -> None:
+    output = tmp_path / "drill.md"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "runbook_generator.cli",
+            "drill",
+            "--manifest",
+            "samples/payment_drill_manifest.json",
+            "--format",
+            "markdown",
+            "--output",
+            str(output),
+        ],
+        check=False,
+        text=True,
+        capture_output=True,
+        env={**os.environ, "PYTHONPATH": "src:."},
+    )
+
+    assert result.returncode == 0
+    assert "ready: scenarios=2/2 fresh=2 passed=2 findings=0" in result.stdout
+    assert "Evidence fingerprint" in output.read_text()
